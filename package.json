@@ -1,0 +1,27 @@
+{
+  "name": "ga4-webpack-plugin",
+  "version": "1.0.0",
+  "description": "Injecting Google snippet into HTML for Analytics",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jxmked/ga4-webpack-plugin.git"
+  },
+  "keywords": [
+    "ga4",
+    "webpack-plugin",
+    "plugin"
+  ],
+  "engines": {
+    "node": ">=10.13.0"
+  },
+  "author": "Jovan De Guia",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jxmked/ga4-webpack-plugin/issues"
+  },
+  "homepage": "https://github.com/jxmked/ga4-webpack-plugin#readme"
+}
