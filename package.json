@@ -1,6 +1,6 @@
 {
   "name": "ga4-webpack-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Injecting Google snippet into HTML for Analytics",
   "main": "index.js",
   "scripts": {
