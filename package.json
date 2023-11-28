@@ -23,5 +23,6 @@
   "bugs": {
     "url": "https://github.com/jxmked/ga4-webpack-plugin/issues"
   },
+  "files": ["index.js", "index.d.ts","package.json", "README.md", "LICENSE"],
   "homepage": "https://github.com/jxmked/ga4-webpack-plugin#readme"
 }
