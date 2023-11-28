@@ -54,42 +54,50 @@ class Plugin {
      * */
     const pattern = /(\<ga4\.analytics\ *\/\>)/i;
 
-    compiler.hooks.emit.tapAsync(
-      "GA4WebpackPlugin",
-      (compilation, callback) => {
-        for (const filename of Object.keys(compilation.assets)) {
-          if (!filename.endsWith(".html")) continue;
+    const CYAN = "\x1b[36m";
+    const RESET = "\x1b[0m";
 
-          // If inject is false, nist remove the ga4 tag from html
-          let script = snippet;
+    compiler.hooks.emit.tapAsync("GA4WebpackPlugin", (compilation, callback) => {
+      for (const filename of Object.keys(compilation.assets)) {
+        if (!/\.(xhtml|html?)$/i.test(filename)) continue;
 
-          if (!this.inject) {
-            script = "";
-          }
+        // If inject is false, nist remove the ga4 tag from html
+        let script = snippet;
 
-          const indexHtml = compilation.assets[filename];
-
-          // Injecting..
-          let modifiedContent;
-          const source = indexHtml.source();
-
-          try {
-            modifiedContent = source.replace(pattern, script);
-          } catch (err) {
-            const stringSource = source.toString();
-            modifiedContent = new Buffer(stringSource.replace(pattern, script));
-          }
-
-          // Update build index.html
-          compilation.assets[filename] = {
-            source: () => modifiedContent,
-            size: () => modifiedContent.length,
-          };
+        if (!this.inject) {
+          script = "";
         }
 
-        callback();
-      },
-    );
+        const indexHtml = compilation.assets[filename];
+
+        // Injecting..
+        const source = indexHtml.source();
+
+        let str = source;
+
+        /**
+         * We need string
+         * */
+        while (str instanceof Buffer) {
+          str = str.toString("utf8");
+          console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
+        }
+
+        const buff = Buffer.from(str.replace(pattern, script));
+
+        // Update build index.html
+        compilation.assets[filename] = {
+          source: () => buff,
+          size: () => buff.length,
+          _valueIsBuffer: true,
+          _value: buff,
+          _valueAsBuffer: buff,
+          _valueAsString: void 0,
+        };
+      }
+
+      callback();
+    });
   }
 }
 
