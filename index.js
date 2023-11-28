@@ -1,15 +1,9 @@
 class Plugin {
-  static src = 'https://www.googletagmanager.com/gtag/js?id=%ID%';
-  static html = `
-  <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-  </script>`;
-  static pageView = `gtag('js', new Date());gtag('config', '%ID%');`;
-
   constructor(options) {
+    if (typeof options !== "object") return;
+
     if (options.id === void 0) {
-      throw new Error('GA4WebpackPlugin requires GA_MEASUREMENT_ID');
+      throw new Error("GA4WebpackPlugin requires GA_MEASUREMENT_ID");
     }
 
     this.callPageView = true;
@@ -21,55 +15,81 @@ class Plugin {
     /**
      * Inject only on build mode
      * */
-    if ('inject' in options) this.inject = options.inject;
+    if ("inject" in options) this.inject = options.inject;
 
     /**
      * Call Page View
      * */
-    if ('callPageView' in options) this.callPageView = options.callPageView;
+    if ("callPageView" in options) this.callPageView = options.callPageView;
+  }
+
+  get snippetCode() {
+    const pageView = `gtag('js', new Date());gtag('config', '${this.id}');`;
+    const gtag_func =
+      `<script>window.dataLayer = window.dataLayer || [];` +
+      `function gtag(){dataLayer.push(arguments);}`;
+
+    const snippet = [
+      '<script async src="',
+      `https://www.googletagmanager.com/gtag/js?id=${this.id}`,
+      '"></script>',
+    ];
+
+    snippet.push(gtag_func);
+
+    if (this.callPageView) {
+      snippet.push(pageView);
+    }
+
+    snippet.push("</script>");
+
+    return snippet.join("");
   }
 
   apply(compiler) {
-    compiler.hooks.emit.tapAsync('GA4WebpackPlugin', (compilation, callback) => {
-      const indexHtml = compilation.assets['index.html'];
-      const keyid = '%ID%';
-      var gtag = "";
-      
-      if(this.inject) {
-        /**
-         * Interpolate template
-         * */
-        const src = Plugin.src.replaceAll(keyid, this.id);
-        const pageView = Plugin.pageView.replaceAll(keyid, this.id);
-  
-        gtag = '\n' + '<script async src="' + src + '"></script>';
-  
-        if (this.callPageView) {
-          gtag += Plugin.html.replace('</script>', pageView + '</script>');
-        } else {
-          gtag += Plugin.html;
+    const snippet = this.snippetCode;
+
+    /**
+     * Matches <ga4.analytics <with/without spaces here> />
+     * */
+    const pattern = /(\<ga4\.analytics\ *\/\>)/i;
+
+    compiler.hooks.emit.tapAsync(
+      "GA4WebpackPlugin",
+      (compilation, callback) => {
+        for (const filename of Object.keys(compilation.assets)) {
+          if (!filename.endsWith(".html")) continue;
+
+          // If inject is false, nist remove the ga4 tag from html
+          let script = snippet;
+
+          if (!this.inject) {
+            script = "";
+          }
+
+          const indexHtml = compilation.assets[filename];
+
+          // Injecting..
+          let modifiedContent;
+          const source = indexHtml.source();
+
+          try {
+            modifiedContent = source.replace(pattern, script);
+          } catch (err) {
+            const stringSource = source.toString();
+            modifiedContent = new Buffer(stringSource.replace(pattern, script));
+          }
+
+          // Update build index.html
+          compilation.assets[filename] = {
+            source: () => modifiedContent,
+            size: () => modifiedContent.length,
+          };
         }
-  
-        // Remove new lines and extra spaces
-        gtag = gtag.replaceAll(/(\n+|\s{2,})*/gi, '');
-      }
 
-      // <ga4.analytics />
-      // <ga4.analytics/>
-      const reg = /(\<ga4\.analytics\ ?\/\>)/i;
-
-      // Injecting...
-
-      const modifiedContent = indexHtml.source().replace(reg, gtag);
-
-      // Update build index.html
-      compilation.assets['index.html'] = {
-        source: () => modifiedContent,
-        size: () => modifiedContent.length
-      };
-
-      callback();
-    });
+        callback();
+      },
+    );
   }
 }
 
