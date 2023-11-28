@@ -1,6 +1,6 @@
 {
   "name": "ga4-webpack-plugin",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Injecting Google snippet into HTML for Analytics",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,12 @@
   "bugs": {
     "url": "https://github.com/jxmked/ga4-webpack-plugin/issues"
   },
-  "files": ["index.js", "index.d.ts","package.json", "README.md", "LICENSE"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
   "homepage": "https://github.com/jxmked/ga4-webpack-plugin#readme"
 }
