@@ -61,12 +61,8 @@ class Plugin {
       for (const filename of Object.keys(compilation.assets)) {
         if (!/\.(xhtml|html?)$/i.test(filename)) continue;
 
-        // If inject is false, nist remove the ga4 tag from html
-        let script = snippet;
-
-        if (!this.inject) {
-          script = "";
-        }
+        // If inject is false, it will just remove ga4 tag from html
+        const script = this.inject ? snippet : "";
 
         const indexHtml = compilation.assets[filename];
 
@@ -79,8 +75,8 @@ class Plugin {
          * We need string
          * */
         while (str instanceof Buffer) {
-          str = str.toString("utf8");
           console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
+          str = str.toString("utf8");
         }
 
         const buff = Buffer.from(str.replace(pattern, script));
