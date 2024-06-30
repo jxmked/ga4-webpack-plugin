@@ -1,3 +1,5 @@
+
+
 class Plugin {
   constructor(options) {
     if (typeof options !== "object") return;
@@ -57,7 +59,7 @@ class Plugin {
     const CYAN = "\x1b[36m";
     const RESET = "\x1b[0m";
 
-    compiler.hooks.processAssets.tap({
+    compiler.hooks.compilation.tap({
       name: 'GA4WebpackPlugin',
       stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
       callback(assets, assetsInfo) {
