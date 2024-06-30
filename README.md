@@ -1,12 +1,14 @@
 # ga4-webpack-plugin
 
-Injecting gtag snippet into HTML for Analytics
+The ga4-webpack-plugin simplifies injecting the Google Analytics 4 (GA4) snippet into your HTML using Webpack.
 
 ## Install
 
-`npm install ga4-webpack-plugin --save-dev`
+Install the plugin via npm: `npm i --save-dev ga4-webpack-plugin`
 
 ## Setup
+
+Add the plugin to your webpack configuration:
 
 ```js
 // webpack.config.js
@@ -14,49 +16,51 @@ Injecting gtag snippet into HTML for Analytics
 const GA4WebpackPlugin = require('ga4-webpack-plugin');
 
 module.exports = {
-  ....
+  // ... other webpack configuration options
 
   plugins: [
     new GA4WebpackPlugin({
-      // Your GTag ID. Required
+      // Your GA4 Measurement ID (required)
       id: "GA_MEASUREMENT_ID",
 
-      // Insert into html (true by default)
-      inject: true | false,
+      // Whether to inject the GA4 snippet into HTML (default: true)
+      inject: true,
 
-      // Automatically call page view (true by default)
-      callPageView: true | false
+      // Automatically trigger a page view on load (default: true)
+      callPageView: true
     })
   ]
 }
+
 ```
 
-Place this `<ga4.analytics />` in to your index.html where to inject the gtag or else it won't inject it.
+> Note: Ensure you replace "GA_MEASUREMENT_ID" with your actual GA4 Measurement ID.
 
-## What kind of thing is about to inject?
+In your index.html, include <ga4.analytics /> where you want the GA4 snippet injected. This step is crucial for the plugin to function correctly.
+
+## Injected HTML
+
+The plugin injects the following code into your HTML:
 
 ```html
-<!-- Google tag (gtag.js) -->
-<script
-  async
-  src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"
-></script>
+<!-- Google Analytics 4 (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
-  gtag("js", new Date());
+  gtag('js', new Date());
 
-  gtag("config", "GA_MEASUREMENT_ID");
+  gtag('config', 'GA_MEASUREMENT_ID');
 </script>
 ```
 
-but
+Optionally, you can enable callPageView: true in the plugin options to automatically trigger the page view. This adds:
 
 ```js
 gtag('js', new Date());
-gtag('config', GA_MEASUREMENT_ID');
+gtag('config', 'GA_MEASUREMENT_ID');
 ```
 
-is optional. Set `callPageView: true` to insert it.
+to your injected code.
