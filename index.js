@@ -1,12 +1,21 @@
-const { Compiler, Compilation } = require("webpack");
+const { Compilation, Compiler } = require("webpack");
 
+/**
+ * Matches <ga4.analytics <with/without spaces here> />
+ * */
+const pattern = /(\<ga4\.analytics\ *\/\>)/i;
+
+const CYAN = "\x1b[36m";
+const RESET = "\x1b[0m";
+
+const PLUGIN_NAME = "GA4WebpackPlugin";
 
 class Plugin {
   constructor(options) {
     if (typeof options !== "object") return;
 
     if (options.id === void 0) {
-      throw new Error("GA4WebpackPlugin requires GA_MEASUREMENT_ID");
+      throw new Error(`${PLUGIN_NAME} requires GA_MEASUREMENT_ID`);
     }
 
     this.callPageView = true;
@@ -49,52 +58,59 @@ class Plugin {
     return snippet.join("");
   }
 
+  #isHtml(str) {
+    return /\.(xhtml|html?)$/i.test(str);
+  }
+
   /**
    * 
    * @param {Compiler} compiler 
    */
   apply(compiler) {
+
     const snippet = this.snippetCode;
 
-    /**
-     * Matches <ga4.analytics <with/without spaces here> />
-     * */
-    const pattern = /(\<ga4\.analytics\ *\/\>)/i;
+    compiler.hooks.compilation.tap(PLUGIN_NAME, compilation => {
+      compilation.hooks.afterProcessAssets.tap({
+        name: PLUGIN_NAME,
+        stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE
+      }, () => {
+        for (const asset of Object.keys(compilation.assets)) {
+          const filePath = compilation.getPath(asset);
 
-    const CYAN = "\x1b[36m";
-    const RESET = "\x1b[0m";
+          if (!this.#isHtml(filePath)) continue;
 
-    compiler.hooks.compilation.tap({
-      name: 'GA4WebpackPlugin',
-      stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
-      callback(assets, assetsInfo) {
-        for (const filename of Object.keys(assets)) {
-          if (!/\.(x?html?)$/i.test(filename)) continue;
+          compilation.updateAsset(filePath, (rawSource) => {
 
-          const script = this.inject ? snippet : "";
-          const indexHtml = assets[filename];
+            // If inject is false, it will just remove ga4 tag from html
+            const script = this.inject ? snippet : "";
 
-          // Injecting..
-          const source = indexHtml.source();
-          let str = source;
+            // Injecting..
+            const source = rawSource.source();
 
-          while (str instanceof Buffer) {
-            console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
-            str = str.toString("utf8");
-          }
+            let str = source;
 
-          const buff = Buffer.from(str.replace(pattern, script));
+            /**
+             * We need string
+             * */
+            while (str instanceof Buffer) {
+              console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
+              str = str.toString("utf8");
+            }
 
-          assets[filename] = {
-            source: () => buff,
-            size: () => buff.length,
-            _valueIsBuffer: true,
-            _value: buff,
-            _valueAsBuffer: buff,
-            _valueAsString: void 0
-          };
+            const buff = Buffer.from(str.replace(pattern, script));
+
+            return {
+              source: () => buff,
+              size: () => buff.length,
+              _valueIsBuffer: true,
+              _value: buff,
+              _valueAsBuffer: buff,
+              _valueAsString: void 0,
+            };
+          })
         }
-      }
+      })
     });
   }
 }
