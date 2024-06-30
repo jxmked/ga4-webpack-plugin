@@ -30,5 +30,8 @@
     "README.md",
     "LICENSE"
   ],
-  "homepage": "https://github.com/jxmked/ga4-webpack-plugin#readme"
+  "homepage": "https://github.com/jxmked/ga4-webpack-plugin#readme",
+  "dependencies": {
+    "webpack": "^5.92.1"
+  }
 }

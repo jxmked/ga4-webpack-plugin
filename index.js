@@ -1,3 +1,4 @@
+const { Compiler, Compilation } = require("webpack");
 
 
 class Plugin {
@@ -48,6 +49,10 @@ class Plugin {
     return snippet.join("");
   }
 
+  /**
+   * 
+   * @param {Compiler} compiler 
+   */
   apply(compiler) {
     const snippet = this.snippetCode;
 
@@ -65,21 +70,21 @@ class Plugin {
       callback(assets, assetsInfo) {
         for (const filename of Object.keys(assets)) {
           if (!/\.(x?html?)$/i.test(filename)) continue;
-  
+
           const script = this.inject ? snippet : "";
           const indexHtml = assets[filename];
-  
+
           // Injecting..
           const source = indexHtml.source();
           let str = source;
-  
+
           while (str instanceof Buffer) {
             console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
             str = str.toString("utf8");
           }
 
           const buff = Buffer.from(str.replace(pattern, script));
-  
+
           assets[filename] = {
             source: () => buff,
             size: () => buff.length,
