@@ -64,3 +64,9 @@ gtag('config', 'GA_MEASUREMENT_ID');
 ```
 
 to your injected code.
+
+# Social 
+- [Github](https://github.com/jxmked)
+- [Instagram](https://www.instagram.com/jxmked/)
+- [Facebook](https://www.facebook.com/deguia25)
+- [Twitter](https://twitter.com/jxmked)
