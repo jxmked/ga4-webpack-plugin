@@ -22,3 +22,4 @@ export interface Ga4WebpackPluginOptions {
 export declare class Ga4WebpackPlugin {
   constructor(options: Ga4WebpackPluginOptions);
 }
+

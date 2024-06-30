@@ -57,42 +57,37 @@ class Plugin {
     const CYAN = "\x1b[36m";
     const RESET = "\x1b[0m";
 
-    compiler.hooks.emit.tapAsync("GA4WebpackPlugin", (compilation, callback) => {
-      for (const filename of Object.keys(compilation.assets)) {
-        if (!/\.(xhtml|html?)$/i.test(filename)) continue;
+    compiler.hooks.processAssets.tap({
+      name: 'GA4WebpackPlugin',
+      stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
+      callback(assets, assetsInfo) {
+        for (const filename of Object.keys(assets)) {
+          if (!/\.(x?html?)$/i.test(filename)) continue;
+  
+          const script = this.inject ? snippet : "";
+          const indexHtml = assets[filename];
+  
+          // Injecting..
+          const source = indexHtml.source();
+          let str = source;
+  
+          while (str instanceof Buffer) {
+            console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
+            str = str.toString("utf8");
+          }
 
-        // If inject is false, it will just remove ga4 tag from html
-        const script = this.inject ? snippet : "";
-
-        const indexHtml = compilation.assets[filename];
-
-        // Injecting..
-        const source = indexHtml.source();
-
-        let str = source;
-
-        /**
-         * We need string
-         * */
-        while (str instanceof Buffer) {
-          console.log(CYAN + "\nGA4 encountered buffer data. Converting..." + RESET);
-          str = str.toString("utf8");
+          const buff = Buffer.from(str.replace(pattern, script));
+  
+          assets[filename] = {
+            source: () => buff,
+            size: () => buff.length,
+            _valueIsBuffer: true,
+            _value: buff,
+            _valueAsBuffer: buff,
+            _valueAsString: void 0
+          };
         }
-
-        const buff = Buffer.from(str.replace(pattern, script));
-
-        // Update build index.html
-        compilation.assets[filename] = {
-          source: () => buff,
-          size: () => buff.length,
-          _valueIsBuffer: true,
-          _value: buff,
-          _valueAsBuffer: buff,
-          _valueAsString: void 0,
-        };
       }
-
-      callback();
     });
   }
 }
