@@ -33,6 +33,10 @@ class Plugin {
      * Call Page View
      * */
     if ("callPageView" in options) this.callPageView = options.callPageView;
+
+
+    if ("showLog" in options) this.showLog = options.showLog;
+
   }
 
   get snippetCode() {
@@ -94,16 +98,15 @@ class Plugin {
               content = oldSource.source();
             }
 
-            while (true) {
-
+            do {
               if (Buffer.isBuffer(content)) {
-                console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
+                if (this.showLog)
+                  console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
                 content = content.toString("utf8");
               } else if (typeof content !== "string") {
                 content = String(content);
-                break;
               }
-            }
+            } while (typeof content !== "string");
 
             const updated = content.replace(pattern, script);
             const buff = Buffer.from(updated);
