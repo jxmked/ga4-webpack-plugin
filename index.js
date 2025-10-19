@@ -69,45 +69,46 @@ class Plugin {
   apply(compiler) {
 
     const snippet = this.snippetCode;
+    const sources = (compiler.webpack && compiler.webpack.sources) || require("webpack").sources;
 
     compiler.hooks.compilation.tap(PLUGIN_NAME, compilation => {
-      compilation.hooks.afterProcessAssets.tap({
+      compilation.hooks.processAssets.tap({
         name: PLUGIN_NAME,
         stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE
-      }, () => {
-        for (const asset of Object.keys(compilation.assets)) {
-          const filePath = compilation.getPath(asset);
+      }, (assets) => {
+        // Use compilation.getAssets() instead of compilation.assets (deprecated / will be frozen)
+        for (const { name } of compilation.getAssets()) {
+          const filePath = compilation.getPath(name);
 
           if (!this.#isHtml(filePath)) continue;
 
-          compilation.updateAsset(filePath, (rawSource) => {
+          compilation.updateAsset(name, (oldSource) => {
 
             // If inject is false, it will just remove ga4 tag from html
             const script = this.inject ? snippet : "";
 
-            // Injecting..
-            const source = rawSource.source();
+            // Begin to update the source file. (Replacing tag with actual tag when needed)
+            let content = "";
 
-            let str = source;
-
-            /**
-             * We need string
-             * */
-            while (str instanceof Buffer) {
-              console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
-              str = str.toString("utf8");
+            if (oldSource && typeof oldSource.source === "function") {
+              content = oldSource.source();
             }
 
-            const buff = Buffer.from(str.replace(pattern, script));
+            while (true) {
 
-            return {
-              source: () => buff,
-              size: () => buff.length,
-              _valueIsBuffer: true,
-              _value: buff,
-              _valueAsBuffer: buff,
-              _valueAsString: void 0,
-            };
+              if (Buffer.isBuffer(content)) {
+                console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
+                content = content.toString("utf8");
+              } else if (typeof content !== "string") {
+                content = String(content);
+                break;
+              }
+            }
+
+            const updated = content.replace(pattern, script);
+            const buff = Buffer.from(updated);
+
+            return new sources.RawSource(buff);
           })
         }
       })
