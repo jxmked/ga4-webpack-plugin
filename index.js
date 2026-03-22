@@ -37,10 +37,19 @@ class Plugin {
 
     if ("showLog" in options) this.showLog = options.showLog;
 
+    if ("appVersion" in options) this.appVersion = options.appVersion;
+
   }
 
   get snippetCode() {
-    const pageView = `gtag('js', new Date());gtag('config', '${this.id}');`;
+    let pageView = `gtag('js', new Date());gtag('config', '${this.id}'`;
+
+    if (typeof this.appVersion === "string") {
+      pageView += `,{"app_version":${this.appVersion}}`
+    }
+
+    pageView += `);`;
+
     const gtag_func =
       `<script>window.dataLayer = window.dataLayer || [];` +
       `function gtag(){dataLayer.push(arguments);}`;

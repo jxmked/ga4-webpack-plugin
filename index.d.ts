@@ -17,9 +17,18 @@ export interface Ga4WebpackPluginOptions {
    * when/where to call the page view. (True by default)
    * */
   callPageView?: boolean;
+
+  /**
+   * App version. (Optional)
+   * */
+  appVersion?: string;
+
+  /**
+   * Show log or not? (False by default)
+   * */
+  showLog?: boolean;
 }
 
 export declare class Ga4WebpackPlugin {
   constructor(options: Ga4WebpackPluginOptions);
 }
-
