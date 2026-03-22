@@ -45,7 +45,7 @@ class Plugin {
     let pageView = `gtag('js', new Date());gtag('config', '${this.id}'`;
 
     if (typeof this.appVersion === "string") {
-      pageView += `,{"app_version":${this.appVersion}}`
+      pageView += `,{"app_version":"${String(this.appVersion)}"}`;
     }
 
     pageView += `);`;
