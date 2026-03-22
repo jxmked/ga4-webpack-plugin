@@ -37,15 +37,17 @@ class Plugin {
 
     if ("showLog" in options) this.showLog = options.showLog;
 
-    if ("appVersion" in options) this.appVersion = options.appVersion;
+    // Additional params at initialization of GA4
+    if ("param" in options) this.param = options.param;
 
   }
 
   get snippetCode() {
     let pageView = `gtag('js', new Date());gtag('config', '${this.id}'`;
 
-    if (typeof this.appVersion === "string") {
-      pageView += `,{"application_version":"${String(this.appVersion)}"}`;
+    if (typeof this.param === "object") {
+      pageView += `,`;
+      pageView += JSON.stringify(this.param);
     }
 
     pageView += `);`;

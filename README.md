@@ -27,7 +27,15 @@ module.exports = {
       inject: true,
 
       // Automatically trigger a page view on load (default: true)
-      callPageView: true
+      callPageView: true,
+
+      // Show log
+      showLog: false,
+      
+      // Parameters that will pass to gtag("config", ID, <HERE>)
+      param: {
+        "application_version": "v1.2.3" // example
+      }
     })
   ]
 }
