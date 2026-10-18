@@ -44,7 +44,7 @@ module.exports = {
 
 > Note: Ensure you replace "GA_MEASUREMENT_ID" with your actual GA4 Measurement ID.
 
-In your index.html, include <ga4.analytics /> where you want the GA4 snippet injected. This step is crucial for the plugin to function correctly.
+The script will be injected before your head tag closing.
 
 ## Injected HTML
 
