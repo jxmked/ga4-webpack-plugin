@@ -1,9 +1,17 @@
 const { Compilation, Compiler } = require("webpack");
 
 /**
- * Matches <ga4.analytics <with/without spaces here> />
+ * Matches closing tag of a </head>.
+ *
+ * I am having an issue with previous approach where the compiler
+ * treats the custom tag as an HTML element and rebuild with it.
+ *
+ * THe issue comes with the new set-up or config of webpack.
+ *
+ * I think its tsc7 or the loaders...
  * */
-const pattern = /(\<ga4\.analytics\ *\/\>)/i;
+const pattern = /(\<\/head>)/i;
+const closing_tag = "</head>";
 
 const CYAN = "\x1b[36m";
 const RESET = "\x1b[0m";
@@ -34,12 +42,10 @@ class Plugin {
      * */
     if ("callPageView" in options) this.callPageView = options.callPageView;
 
-
     if ("showLog" in options) this.showLog = options.showLog;
 
     // Additional params at initialization of GA4
     if ("param" in options) this.param = options.param;
-
   }
 
   get snippetCode() {
@@ -78,54 +84,57 @@ class Plugin {
   }
 
   /**
-   * 
-   * @param {Compiler} compiler 
+   *
+   * @param {Compiler} compiler
    */
   apply(compiler) {
-
     const snippet = this.snippetCode;
     const sources = (compiler.webpack && compiler.webpack.sources) || require("webpack").sources;
 
-    compiler.hooks.compilation.tap(PLUGIN_NAME, compilation => {
-      compilation.hooks.processAssets.tap({
-        name: PLUGIN_NAME,
-        stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE
-      }, (assets) => {
-        // Use compilation.getAssets() instead of compilation.assets (deprecated / will be frozen)
-        for (const { name } of compilation.getAssets()) {
-          const filePath = compilation.getPath(name);
+    compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: PLUGIN_NAME,
+          stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE,
+        },
+        (assets) => {
+          // Use compilation.getAssets() instead of compilation.assets (deprecated / will be frozen)
+          for (const { name } of compilation.getAssets()) {
+            const filePath = compilation.getPath(name);
 
-          if (!this.#isHtml(filePath)) continue;
+            if (!this.#isHtml(filePath)) continue;
 
-          compilation.updateAsset(name, (oldSource) => {
+            compilation.updateAsset(name, (oldSource) => {
+              // If inject is false, it will just remove ga4 tag from html
+              const script = this.inject ? snippet : closing_tag;
 
-            // If inject is false, it will just remove ga4 tag from html
-            const script = this.inject ? snippet : "";
+              // Begin to update the source file. (Replacing tag with actual tag when needed)
+              let content = "";
 
-            // Begin to update the source file. (Replacing tag with actual tag when needed)
-            let content = "";
-
-            if (oldSource && typeof oldSource.source === "function") {
-              content = oldSource.source();
-            }
-
-            do {
-              if (Buffer.isBuffer(content)) {
-                if (this.showLog)
-                  console.log(`${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`);
-                content = content.toString("utf8");
-              } else if (typeof content !== "string") {
-                content = String(content);
+              if (oldSource && typeof oldSource.source === "function") {
+                content = oldSource.source();
               }
-            } while (typeof content !== "string");
 
-            const updated = content.replace(pattern, script);
-            const buff = Buffer.from(updated);
+              do {
+                if (Buffer.isBuffer(content)) {
+                  if (this.showLog)
+                    console.log(
+                      `${CYAN}\n${PLUGIN_NAME} encountered buffer data. Converting...${RESET}`,
+                    );
+                  content = content.toString("utf8");
+                } else if (typeof content !== "string") {
+                  content = String(content);
+                }
+              } while (typeof content !== "string");
 
-            return new sources.RawSource(buff);
-          })
-        }
-      })
+              const updated = content.replace(pattern, script.concat(closing_tag));
+              const buff = Buffer.from(updated);
+
+              return new sources.RawSource(buff);
+            });
+          }
+        },
+      );
     });
   }
 }
